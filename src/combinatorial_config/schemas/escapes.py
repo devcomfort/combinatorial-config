@@ -24,11 +24,13 @@ True
 False
 """
 
+from typing import Union
+
 
 class _UndefinedType:
     """Sentinel type representing an undefined or unspecified value."""
 
-    _instance: "_UndefinedType" | None = None
+    _instance: Union["_UndefinedType", None] = None
 
     def __new__(cls):
         if cls._instance is None:
