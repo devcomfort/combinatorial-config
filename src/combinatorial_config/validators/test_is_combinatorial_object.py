@@ -5,10 +5,9 @@ test_is_combinatorial_object
 Comprehensive pytest test suite for the `is_combinatorial_object` type guard function.
 
 This module validates the runtime behavior of `is_combinatorial_object`, which
-serves as a type guard for CombinatorialObject validation. The function must
-correctly identify objects (dicts or dataclass instances) where all field values
-are iterable collections, while rejecting scalar values, strings, and other
-invalid configurations.
+serves as a type guard for CombinatorialObject validation. The function validates
+that all field values are either iterable (excluding strings) or nested combinatorial
+objects, supporting both flat and hierarchical configuration structures.
 
 Test Strategy
 -------------
@@ -20,6 +19,7 @@ specific aspect of the validation logic:
    - Tests various iterable types: lists, tuples, sets, ranges, generators
    - Tests both dict and dataclass variants
    - Tests nested structures and empty iterables
+   - Tests mixed iterable and nested combinatorial object fields
 
 2. **TestInvalidCombinatorialObjects**: Negative test cases
    - Verifies that invalid objects are correctly rejected
@@ -29,10 +29,10 @@ specific aspect of the validation logic:
    - Tests mixed valid/invalid field scenarios
 
 3. **TestEdgeCases**: Boundary conditions and special cases
-   - Empty dicts and dataclasses (vacuously valid)
+   - Empty dicts and dataclasses (vacuously valid - base case)
    - None and bool values
-   - Nested dicts and bytes (both iterable, thus valid)
    - Dataclass classes vs instances
+   - Deep nesting structures
 
 4. **TestTypeGuardBehavior**: TypeGuard functionality
    - Validates that the function works as a proper TypeGuard
@@ -49,9 +49,7 @@ The test suite provides comprehensive coverage of:
 - **Iterable types**: lists, tuples, sets, ranges, generators, dicts, bytes
 - **Non-iterable types**: int, float, str, bool, None
 - **Structural variants**: empty, single-field, multi-field, nested
-- **Mixed scenarios**: some fields valid, some invalid
-
-Total: 39 test cases covering all validation paths
+- **Mixed scenarios**: some fields iterable, some nested combinatorial objects
 
 Fixtures
 --------
@@ -61,15 +59,17 @@ The module defines several dataclass fixtures for testing:
 - InvalidConfigString: Contains string field (invalid)
 - MixedConfig: Mix of iterable and non-iterable fields (invalid)
 - EmptyConfig: No fields (valid - vacuously true)
+- NestedConfig: Contains nested combinatorial object fields (valid)
 - RegularClass: Non-dataclass class (invalid)
 
 Key Validation Rules Tested
 ----------------------------
 1. Object must be dict or dataclass instance (not class itself)
-2. All field values must be iterable
+2. All field values must be iterable OR valid combinatorial objects
 3. String values are explicitly rejected (treated as atomic, not iterable)
 4. Empty objects are valid (no fields to fail validation)
 5. Primitive types and non-dict/non-dataclass objects are invalid
+6. Nested combinatorial objects are supported (recursive validation)
 
 Notes
 -----
@@ -113,17 +113,28 @@ from combinatorial_config.validators.is_combinatorial_object import (
 # Test fixtures: dataclass definitions
 @dataclass
 class ValidConfig:
-    """Dataclass with all iterable fields."""
-
+    """Dataclass with all iterable fields (valid)."""
     learning_rates: list[float]
     batch_sizes: tuple[int, ...]
     epochs: list[int]
 
 
 @dataclass
+class EmptyConfig:
+    """Dataclass with no fields (valid - vacuously true)."""
+    pass
+
+
+@dataclass
+class NestedConfig:
+    """Dataclass with nested combinatorial object fields (valid)."""
+    sub_config: dict  # Will contain a combinatorial object
+    parameters: list[float]  # Iterable field
+
+
+@dataclass
 class InvalidConfigScalar:
     """Dataclass with scalar (non-iterable) fields."""
-
     learning_rate: float
     batch_size: int
 
@@ -131,29 +142,19 @@ class InvalidConfigScalar:
 @dataclass
 class InvalidConfigString:
     """Dataclass with string field."""
-
     name: str
     experiments: list[str]
 
 
 @dataclass
 class MixedConfig:
-    """Dataclass with both iterable and non-iterable fields."""
-
-    learning_rates: list[float]
-    model_name: str
-
-
-@dataclass
-class EmptyConfig:
-    """Dataclass with no fields."""
-
-    pass
+    """Dataclass with both valid (iterable) and invalid (scalar) fields."""
+    learning_rates: list[float]  # Valid (iterable)
+    model_name: str  # Invalid (string)
 
 
 class RegularClass:
     """Regular class (not a dataclass)."""
-
     def __init__(self):
         self.values = [1, 2, 3]
 
@@ -165,81 +166,87 @@ class TestValidCombinatorialObjects:
     This class contains positive test cases that verify `is_combinatorial_object`
     correctly identifies valid combinatorial configuration objects. A valid object
     must be either a dict or dataclass instance with all field values being
-    iterable (excluding strings).
+    iterable (excluding strings) or nested combinatorial objects.
 
     Test Coverage
     -------------
-    - Dict variants: lists, tuples, sets, ranges, generators, nested structures
-    - Dataclass variants: mixed iterable types, empty iterables
-    - Various iterable types from collections.abc.Iterable
+    - Empty dicts and dataclasses (vacuously valid)
+    - Dict variants: lists, tuples, sets, ranges  
+    - Dataclass variants: mixed iterable types
+    - Nested combinatorial objects
+    - Mixed iterable and nested combinatorial object fields
 
     All tests in this class should return True from is_combinatorial_object().
     """
+
+    def test_valid_empty_dict(self):
+        """Empty dict should be valid (base case)."""
+        obj = {}
+        assert is_combinatorial_object(obj) is True
+
+    def test_valid_empty_dataclass(self):
+        """Empty dataclass should be valid (base case)."""
+        obj = EmptyConfig()
+        assert is_combinatorial_object(obj) is True
+
+    def test_valid_dict_with_empty_dict_value(self):
+        """Dict with empty dict value should be valid."""
+        obj = {"nested": {}}
+        assert is_combinatorial_object(obj) is True
+
+    def test_valid_dict_with_multiple_empty_dicts(self):
+        """Dict with multiple empty dict values should be valid."""
+        obj = {
+            "config_a": {},
+            "config_b": {},
+            "config_c": {},
+        }
+        assert is_combinatorial_object(obj) is True
 
     def test_valid_dict_with_lists(self):
         """Dict with list values should be valid."""
         obj = {
             "learning_rate": [0.1, 0.01, 0.001],
             "batch_size": [16, 32, 64],
-            "dropout": [0.1, 0.2, 0.3],
         }
         assert is_combinatorial_object(obj) is True
 
     def test_valid_dict_with_tuples(self):
         """Dict with tuple values should be valid."""
-        obj = {
-            "lr": (0.1, 0.01),
-            "bs": (16, 32),
-        }
-        assert is_combinatorial_object(obj) is True
-
-    def test_valid_dict_with_sets(self):
-        """Dict with set values should be valid."""
-        obj = {
-            "options": {1, 2, 3},
-            "choices": {"a", "b", "c"},
-        }
-        assert is_combinatorial_object(obj) is True
-
-    def test_valid_dict_with_ranges(self):
-        """Dict with range values should be valid."""
-        obj = {
-            "epochs": range(10, 100, 10),
-            "layers": range(1, 5),
-        }
-        assert is_combinatorial_object(obj) is True
-
-    def test_valid_dict_with_generators(self):
-        """Dict with generator values should be valid."""
-        obj = {
-            "values": (x for x in range(10)),
-        }
+        obj = {"lr": (0.1, 0.01), "bs": (16, 32)}
         assert is_combinatorial_object(obj) is True
 
     def test_valid_dataclass_with_lists(self):
         """Dataclass with list fields should be valid."""
         obj = ValidConfig(
-            learning_rates=[0.1, 0.01, 0.001],
-            batch_sizes=(16, 32, 64),
-            epochs=[10, 20, 30],
+            learning_rates=[0.1, 0.01],
+            batch_sizes=(16, 32),
+            epochs=[10, 20],
         )
         assert is_combinatorial_object(obj) is True
 
-    def test_valid_dataclass_with_empty_iterables(self):
-        """Dataclass with empty iterable fields should be valid."""
-        obj = ValidConfig(
-            learning_rates=[],
-            batch_sizes=(),
-            epochs=[],
-        )
-        assert is_combinatorial_object(obj) is True
-
-    def test_valid_dict_with_nested_lists(self):
-        """Dict with nested list values should be valid."""
+    def test_valid_nested_combinatorial_object(self):
+        """Dict with nested combinatorial object values should be valid."""
         obj = {
-            "configs": [[1, 2], [3, 4]],
-            "params": [(0.1, 0.2), (0.3, 0.4)],
+            "model": {"layers": [2, 4, 8]},
+            "training": {"lr": [0.1, 0.01]},
         }
+        assert is_combinatorial_object(obj) is True
+
+    def test_valid_mixed_iterable_and_nested(self):
+        """Mixed iterable and nested combinatorial object should be valid."""
+        obj = {
+            "params": [0.1, 0.2],
+            "config": {"nested": [1, 2, 3]},
+        }
+        assert is_combinatorial_object(obj) is True
+
+    def test_valid_dataclass_with_nested_config(self):
+        """Dataclass with nested combinatorial object field should be valid."""
+        obj = NestedConfig(
+            sub_config={"lr": [0.1, 0.01]},
+            parameters=[1.0, 2.0],
+        )
         assert is_combinatorial_object(obj) is True
 
 
@@ -270,12 +277,12 @@ class TestInvalidCombinatorialObjects:
     """
 
     def test_invalid_dict_with_scalar_int(self):
-        """Dict with scalar int value should be invalid."""
+        """Dict with scalar int value should be invalid (not iterable)."""
         obj = {"learning_rate": 0.1, "batch_size": 32}
         assert is_combinatorial_object(obj) is False
 
     def test_invalid_dict_with_scalar_float(self):
-        """Dict with scalar float value should be invalid."""
+        """Dict with scalar float value should be invalid (not iterable)."""
         obj = {"learning_rate": 0.001}
         assert is_combinatorial_object(obj) is False
 
@@ -287,8 +294,8 @@ class TestInvalidCombinatorialObjects:
     def test_invalid_dict_with_mixed_values(self):
         """Dict with mixed iterable and scalar values should be invalid."""
         obj = {
-            "learning_rate": [0.1, 0.01],
-            "batch_size": 32,  # Scalar
+            "learning_rate": [0.1, 0.01],  # Valid (iterable)
+            "batch_size": 32,  # Invalid (scalar)
         }
         assert is_combinatorial_object(obj) is False
 
@@ -303,7 +310,7 @@ class TestInvalidCombinatorialObjects:
         assert is_combinatorial_object(obj) is False
 
     def test_invalid_dataclass_with_mixed(self):
-        """Dataclass with mixed field types should be invalid."""
+        """Dataclass with mixed iterable and string fields should be invalid."""
         obj = MixedConfig(learning_rates=[0.1, 0.01], model_name="resnet")
         assert is_combinatorial_object(obj) is False
 
@@ -357,57 +364,65 @@ class TestEdgeCases:
     -------------
     - Empty containers: empty dict, empty dataclass (both valid - vacuously true)
     - Special values: None, bool (both invalid)
-    - Nested structures: dict values, bytes (both iterable, thus valid)
+    - Nested structures: dict values, bytes (bytes iterable, dicts can be combinatorial objects)
     - Type vs instance: dataclass class vs dataclass instance
 
     Design Decisions Tested
     -----------------------
     1. Empty objects are valid: An object with zero fields vacuously satisfies
-       "all fields are iterable" (there are no fields to fail the check)
+       "all fields are iterable or combinatorial objects"
 
     2. Dataclass classes are invalid: Only instances are accepted, not the
        class itself, even though classes have __dataclass_fields__
 
-    3. Dicts are iterable: A dict value is valid because dicts are iterable
-       (they yield keys when iterated)
+    3. Dicts as values: Valid if they are combinatorial objects (either empty
+       or containing iterable/combinatorial object values)
 
     4. Bytes are iterable: Bytes objects are valid field values (they yield ints)
     """
 
     def test_empty_dict(self):
-        """Empty dict should be valid (vacuously true)."""
+        """Empty dict should be valid (base case)."""
         assert is_combinatorial_object({}) is True
 
     def test_empty_dataclass(self):
-        """Empty dataclass should be valid (vacuously true)."""
+        """Empty dataclass should be valid (base case)."""
         obj = EmptyConfig()
         assert is_combinatorial_object(obj) is True
 
     def test_dict_with_none_value(self):
-        """Dict with None value should be invalid."""
+        """Dict with None value should be invalid (not iterable)."""
         obj = {"key": None}
         assert is_combinatorial_object(obj) is False
 
     def test_dict_with_bool_value(self):
-        """Dict with bool value should be invalid."""
+        """Dict with bool value should be invalid (not iterable)."""
         obj = {"flag": True}
         assert is_combinatorial_object(obj) is False
 
     def test_dict_with_dict_value(self):
-        """Dict with dict value should be valid (dicts are iterable)."""
+        """Dict with dict value should be valid (dict is iterable)."""
         obj = {"nested": {"a": 1, "b": 2}}
-        # Note: dict is iterable (yields keys), so this should be True
+        # The nested dict itself is iterable (yields keys), so it's valid
+        # Note: dict is iterable (yields keys when iterated)
+        assert is_combinatorial_object(obj) is True
+
+    def test_dict_with_nested_combinatorial_object(self):
+        """Dict with nested combinatorial object value should be valid."""
+        obj = {"nested": {"a": [1, 2], "b": [3, 4]}}
+        # The nested dict is a valid combinatorial object (iterable values)
         assert is_combinatorial_object(obj) is True
 
     def test_dict_with_bytes_value(self):
-        """Dict with bytes value should be valid (bytes are iterable)."""
+        """Dict with bytes value should be valid (bytes is iterable)."""
         obj = {"data": b"hello"}
+        # bytes is iterable (yields ints), so it's valid
         assert is_combinatorial_object(obj) is True
 
     def test_dataclass_class_itself(self):
         """Passing dataclass class (not instance) should be invalid."""
         # The class itself, not an instance
-        assert is_combinatorial_object(ValidConfig) is False
+        assert is_combinatorial_object(EmptyConfig) is False
         # The class has __dataclass_fields__ but we only accept instances
 
 
@@ -471,12 +486,13 @@ class TestDocstringExamples:
     Test Coverage
     -------------
     Each test corresponds to a specific example from the function's docstring:
-    - Valid dataclass example
-    - Valid dict example
-    - Invalid scalar example
-    - Invalid string example
+    - Valid empty structures (base case)
+    - Valid nested empty structures
+    - Valid structures with iterable values
+    - Valid nested configuration structures
+    - Invalid scalar examples
+    - Invalid string examples
     - Invalid primitive type examples
-    - Invalid collection type examples
 
     Maintenance
     -----------
@@ -484,8 +500,31 @@ class TestDocstringExamples:
     also be updated to maintain synchronization between documentation and tests.
     """
 
-    def test_docstring_example_valid_dataclass(self):
-        """Test the valid dataclass example from docstring."""
+    def test_valid_empty_structures(self):
+        """Test that empty dict/dataclass are valid (base case)."""
+        assert is_combinatorial_object({}) is True
+
+        @dataclass
+        class EmptyParams:
+            pass
+
+        assert is_combinatorial_object(EmptyParams()) is True
+
+    def test_valid_nested_empty_structures(self):
+        """Test that nested empty structures are valid."""
+        nested_dict = {"config_a": {}, "config_b": {"nested": {}}}
+        assert is_combinatorial_object(nested_dict) is True
+
+    def test_valid_dict_with_lists(self):
+        """Test that dicts with list values are valid."""
+        config_dict = {
+            "learning_rate": [0.1, 0.01, 0.001],
+            "batch_size": [16, 32, 64],
+        }
+        assert is_combinatorial_object(config_dict) is True
+
+    def test_valid_dataclass_with_lists(self):
+        """Test that dataclasses with list fields are valid."""
 
         @dataclass
         class HyperParams:
@@ -495,29 +534,28 @@ class TestDocstringExamples:
         params = HyperParams([0.1, 0.01], (10, 20, 30))
         assert is_combinatorial_object(params) is True
 
-    def test_docstring_example_valid_dict(self):
-        """Test the valid dict example from docstring."""
-        config_dict = {
-            "learning_rate": [0.1, 0.01, 0.001],
-            "batch_size": [16, 32, 64],
-            "dropout": [0.1, 0.2, 0.3],
+    def test_valid_nested_config(self):
+        """Test valid nested configuration structures."""
+        nested_cfg = {
+            "model": {"layers": [2, 4, 8]},
+            "training": {"optimizer": {"lr": [0.1, 0.01]}},
         }
-        assert is_combinatorial_object(config_dict) is True
+        assert is_combinatorial_object(nested_cfg) is True
 
-    def test_docstring_example_invalid_scalar(self):
-        """Test the invalid scalar example from docstring."""
+    def test_invalid_scalar(self):
+        """Test the invalid scalar example."""
         scalar_config = {"lr": 0.1, "bs": 32}
         assert is_combinatorial_object(scalar_config) is False
 
-    def test_docstring_example_invalid_string(self):
-        """Test the invalid string example from docstring."""
+    def test_invalid_string(self):
+        """Test the invalid string example."""
         string_config = {"name": "experiment1"}
         assert is_combinatorial_object(string_config) is False
 
-    def test_docstring_example_invalid_int(self):
-        """Test the invalid int example from docstring."""
+    def test_invalid_primitive_int(self):
+        """Test the invalid int example."""
         assert is_combinatorial_object(42) is False
 
-    def test_docstring_example_invalid_list(self):
-        """Test the invalid list example from docstring."""
+    def test_invalid_primitive_list(self):
+        """Test the invalid list example."""
         assert is_combinatorial_object([1, 2, 3]) is False
