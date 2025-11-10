@@ -20,7 +20,6 @@ build-backend = "hatchling.build"
 [tool.rye]
 managed = true
 dev-dependencies = [
-    "build>=1.0.0",
     "twine>=5.0.0",
 ]
 

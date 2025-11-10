@@ -172,9 +172,7 @@ jobs:
         run: rye run pytest src/combinatorial_config -v
 
       - name: Build package
-        run: rye run python -m build
-        env:
-          PYTHONPATH: ${{ github.workspace }}/src
+        run: rye build --all
 
       - name: Check package
         run: rye run twine check dist/*
