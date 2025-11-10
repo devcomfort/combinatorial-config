@@ -1,6 +1,6 @@
 [project]
 name = "combinatorial-config"
-version = "0.1.0"
+version = "0.2.0"
 description = "Add your description here"
 authors = [
     { name = "devcomfort", email = "im@devcomfort.me" }
