@@ -20,6 +20,16 @@ while maintaining compatibility with Python's typing system. Any object that
 has the required attributes (`__dataclass_fields__`, `__dataclass_params__`,
 `__post_init__`) will be considered compatible with this protocol.
 
+**Important**: This protocol is used only for static type checking (type hints).
+For actual runtime validation, use `is_dataclass()` from the `dataclasses` module
+instead. The `DataclassProtocol` provides type information to static type checkers,
+while `is_dataclass()` performs the actual runtime check to determine if an object
+is a dataclass instance.
+
+For example, in `is_combinatorial_object()` validator, `is_dataclass(obj)` is
+used for runtime validation, while `DataclassProtocol` is used in type annotations
+to indicate that a function accepts dataclass instances.
+
 Examples
 --------
 >>> from dataclasses import dataclass
@@ -65,11 +75,17 @@ class DataclassProtocol(Protocol):
     Notes
     -----
     This is a Protocol class and should not be instantiated directly. It exists
-    purely for static type checking purposes. Use `isinstance()` checks at
-    runtime with actual dataclass instances instead.
+    purely for static type checking purposes. 
+
+    **Runtime Validation**: For actual runtime validation, use `is_dataclass()` from
+    the `dataclasses` module instead of this protocol. The `DataclassProtocol` is
+    only for type hints and static type checking, while `is_dataclass()` performs
+    the actual runtime check.
 
     The protocol is structural, meaning any object with these three attributes
     will satisfy the type check, even if not explicitly declared as a dataclass.
+    However, at runtime, only objects created with the `@dataclass` decorator will
+    pass `is_dataclass()` checks.
 
     Examples
     --------
