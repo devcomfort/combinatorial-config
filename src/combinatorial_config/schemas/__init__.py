@@ -110,9 +110,14 @@ Using CombinatorialObject for combinatorial configurations:
 ...     print("Valid combinatorial config")
 """
 
-from .values import NumberValue, PrimitiveValue, EnumerableValue
-from .fields import RangeField, EnumField, NormalizedRangeField
-from .escapes import Undefined, _UndefinedType
+from .number_value import NumberValue
+from .primitive_value import PrimitiveValue
+from .enumerable_value import EnumerableValue
+from .range_field import RangeField
+from .normalized_range_field import NormalizedRangeField
+from .enum_field import EnumField
+from .undefined import Undefined
+from ._undefined_type import _UndefinedType
 from .dataclass_protocol import DataclassProtocol
 from .combinatorial_object import CombinatorialObject
 
