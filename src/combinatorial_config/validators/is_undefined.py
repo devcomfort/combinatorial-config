@@ -1,11 +1,16 @@
 """
-validators.escapes
+is_undefined
 
-Validators for sentinel values, including the Undefined sentinel used in schemas.
+Type guard and identity check for the Undefined sentinel value.
 
-Defines
--------
-- is_undefined: Type guard and identity check for the Undefined sentinel value.
+This module provides a type guard function to validate whether a value is the
+Undefined sentinel object used in schemas for representing undefined or
+unspecified field values.
+
+Functions
+---------
+is_undefined
+    Check if value is the Undefined sentinel object.
 
 Notes
 -----
@@ -18,14 +23,15 @@ Notes
 Examples
 --------
 >>> from combinatorial_config.schemas import Undefined
->>> from combinatorial_config.validators.escapes import is_undefined
+>>> from combinatorial_config.validators import is_undefined
 >>> is_undefined(Undefined)
 True
 >>> is_undefined(None)
 False
 """
 
-from ..schemas import Undefined, _UndefinedType
+from ..schemas.undefined import Undefined
+from ..schemas._undefined_type import _UndefinedType
 from typing import Any, TypeGuard
 
 

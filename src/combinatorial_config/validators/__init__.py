@@ -76,9 +76,12 @@ True
 False
 """
 
-from .values import is_number_value, is_primitive_value, is_enumerable_value
-from .fields import is_range_field, is_enum_field
-from .escapes import is_undefined
+from .is_number_value import is_number_value
+from .is_primitive_value import is_primitive_value
+from .is_enumerable_value import is_enumerable_value
+from .is_range_field import is_range_field
+from .is_enum_field import is_enum_field
+from .is_undefined import is_undefined
 from .is_combinatorial_object import is_combinatorial_object
 
 __all__ = [
