@@ -6,6 +6,41 @@ A Python library for automatically generating all combinations of experiment con
 
 This library was born out of a need while using Hydra for experiment configuration management. We wanted an easy way to generate all combinations of multiple hyperparameters. This library automatically generates combinations of experiment variables, enabling systematic exploration of all possible experiment configurations.
 
+## Installation
+
+### For Developers
+
+If you're contributing to the project or need the latest features, install from source:
+
+```bash
+# Clone the repository
+git clone https://github.com/your-org/combinatorial-config.git
+cd combinatorial-config
+
+# Install in editable mode with development dependencies
+pip install -e ".[dev]"
+
+# Or using rye
+rye sync
+```
+
+### For Researchers and End Users
+
+Install the stable release from PyPI:
+
+```bash
+pip install combinatorial-config
+```
+
+Or using rye:
+
+```bash
+rye add combinatorial-config
+```
+
+**Requirements:**
+- Python 3.8+
+
 ## Main Feature: `generate_combinations`
 
 The `generate_combinations` function takes a combinatorial configuration object (dict or dataclass) and generates all possible combinations.
@@ -271,18 +306,6 @@ for combo in generate_combinations(config, undefined_value_alias="__undefined__"
     if combo["model"]["type"] is Undefined:
         # Handle case where model type is not specified
         pass
-```
-
-## Installation
-
-```bash
-pip install combinatorial-config
-```
-
-Or
-
-```bash
-rye add combinatorial-config
 ```
 
 ## License
