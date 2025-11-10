@@ -20,4 +20,3 @@ class TestIsPrimitiveValue:
         assert is_primitive_value(None) is False
         assert is_primitive_value([1, 2]) is False
         assert is_primitive_value({}) is False
-

@@ -13,4 +13,3 @@ class TestIsUndefined:
         assert is_undefined(False) is False
         assert is_undefined("") is False
         assert is_undefined(0) is False
-

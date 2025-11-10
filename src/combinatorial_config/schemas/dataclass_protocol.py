@@ -75,7 +75,7 @@ class DataclassProtocol(Protocol):
     Notes
     -----
     This is a Protocol class and should not be instantiated directly. It exists
-    purely for static type checking purposes. 
+    purely for static type checking purposes.
 
     **Runtime Validation**: For actual runtime validation, use `is_dataclass()` from
     the `dataclasses` module instead of this protocol. The `DataclassProtocol` is

@@ -18,4 +18,3 @@ class TestUndefined:
         assert Undefined is not None
         assert Undefined is not False
         assert Undefined is not True
-

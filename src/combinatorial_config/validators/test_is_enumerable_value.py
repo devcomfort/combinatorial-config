@@ -18,4 +18,3 @@ class TestIsEnumerableValue:
         assert is_enumerable_value(None) is False
         assert is_enumerable_value([1, 2]) is False
         assert is_enumerable_value({}) is False
-

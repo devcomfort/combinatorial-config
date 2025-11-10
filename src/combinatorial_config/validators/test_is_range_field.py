@@ -27,4 +27,3 @@ class TestIsRangeField:
     def test_invalid_element_type(self):
         assert is_range_field(("a",)) is False
         assert is_range_field((1, "b")) is False
-

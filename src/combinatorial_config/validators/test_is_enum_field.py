@@ -29,4 +29,3 @@ class TestIsEnumField:
     def test_invalid_element_type(self):
         assert is_enum_field((1, 2, None)) is False
         assert is_enum_field((1, [2])) is False
-

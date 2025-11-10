@@ -19,4 +19,3 @@ class TestIsNumberValue:
         assert is_number_value(None) is False
         assert is_number_value([1, 2]) is False
         assert is_number_value({}) is False
-
