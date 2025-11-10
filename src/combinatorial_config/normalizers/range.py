@@ -5,81 +5,85 @@ from ..schemas import NumberValue, RangeField, NormalizedRangeField
 from ..validators import is_range_field
 
 
-def normalize_range_field(value: RangeField) -> NormalizedRangeField:
-    """
-    Normalize RangeField to a standard 3-tuple (start, stop, step).
+class Range:
+    """Normalization utilities for RangeField."""
 
-    Converts various RangeField formats to a normalized representation:
-    - (stop,) -> (0, stop, 1)
-    - (start, stop) -> (start, stop, 1)
-    - (start, stop, step) -> (start, stop, step)
+    @staticmethod
+    def to_parameters(value: RangeField) -> NormalizedRangeField:
+        """
+        Normalize RangeField to a standard 3-tuple (start, stop, step).
 
-    Parameters
-    ----------
-    value : RangeField
-        A tuple of 1-3 numeric values representing a range.
+        Converts various RangeField formats to a normalized representation:
+        - (stop,) -> (0, stop, 1)
+        - (start, stop) -> (start, stop, 1)
+        - (start, stop, step) -> (start, stop, step)
 
-    Returns
-    -------
-    NormalizedRangeField
-        A 3-tuple (start, stop, step) with all values normalized.
+        Parameters
+        ----------
+        value : RangeField
+            A tuple of 1-3 numeric values representing a range.
 
-    Raises
-    ------
-    ValueError
-        If value is not a valid RangeField.
+        Returns
+        -------
+        NormalizedRangeField
+            A 3-tuple (start, stop, step) with all values normalized.
 
-    Examples
-    --------
-    >>> normalize_range_field((5,))
-    (0, 5, 1)
-    >>> normalize_range_field((2, 8))
-    (2, 8, 1)
-    >>> normalize_range_field((1, 10, 2))
-    (1, 10, 2)
-    >>> normalize_range_field((0.0, 1.0, 0.1))
-    (0.0, 1.0, 0.1)
-    """
-    if not is_range_field(value):
-        raise ValueError(f"Invalid range field: {value}")
+        Raises
+        ------
+        ValueError
+            If value is not a valid RangeField.
 
-    if len(value) == 1:
-        return (0, value[0], 1)
-    elif len(value) == 2:
-        return (value[0], value[1], 1)
-    elif len(value) == 3:
-        return (value[0], value[1], value[2])
-    else:
-        raise ValueError(f"Invalid range field: {value}")
+        Examples
+        --------
+        >>> Range.to_parameters((5,))
+        (0, 5, 1)
+        >>> Range.to_parameters((2, 8))
+        (2, 8, 1)
+        >>> Range.to_parameters((1, 10, 2))
+        (1, 10, 2)
+        >>> Range.to_parameters((0.0, 1.0, 0.1))
+        (0.0, 1.0, 0.1)
+        """
+        if not is_range_field(value):
+            raise ValueError(f"Invalid range field: {value}")
 
+        if len(value) == 1:
+            return (0, value[0], 1)
+        elif len(value) == 2:
+            return (value[0], value[1], 1)
+        elif len(value) == 3:
+            return (value[0], value[1], value[2])
+        else:
+            raise ValueError(f"Invalid range field: {value}")
 
-def range_field_to_list(value: RangeField) -> list[NumberValue]:
-    """
-    Convert RangeField to a list of numeric values using numpy.arange.
+    @staticmethod
+    def to_list(value: RangeField) -> list[NumberValue]:
+        """
+        Convert RangeField to a list of numeric values using numpy.arange.
 
-    Parameters
-    ----------
-    value : RangeField
-        A tuple of 1-3 numeric values representing a range.
+        Parameters
+        ----------
+        value : RangeField
+            A tuple of 1-3 numeric values representing a range.
 
-    Returns
-    -------
-    list[NumberValue]
-        A list of numeric values generated from the range.
+        Returns
+        -------
+        list[NumberValue]
+            A list of numeric values generated from the range.
 
-    Raises
-    ------
-    ValueError
-        If value is not a valid RangeField.
+        Raises
+        ------
+        ValueError
+            If value is not a valid RangeField.
 
-    Examples
-    --------
-    >>> range_field_to_list((5,))
-    [0, 1, 2, 3, 4]
-    >>> range_field_to_list((2, 8))
-    [2, 3, 4, 5, 6, 7]
-    >>> range_field_to_list((1, 10, 2))
-    [1, 3, 5, 7, 9]
-    """
-    start, stop, step = normalize_range_field(value)
-    return np.arange(start, stop, step).tolist()
+        Examples
+        --------
+        >>> Range.to_list((5,))
+        [0, 1, 2, 3, 4]
+        >>> Range.to_list((2, 8))
+        [2, 3, 4, 5, 6, 7]
+        >>> Range.to_list((1, 10, 2))
+        [1, 3, 5, 7, 9]
+        """
+        start, stop, step = Range.to_parameters(value)
+        return np.arange(start, stop, step).tolist()
