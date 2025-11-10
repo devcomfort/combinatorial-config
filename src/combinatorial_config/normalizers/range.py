@@ -1,6 +1,5 @@
 """Range field normalization utilities."""
 
-import numpy as np
 from ..schemas import NumberValue, RangeField, NormalizedRangeField
 from ..validators import is_range_field
 
@@ -59,7 +58,10 @@ class Range:
     @staticmethod
     def to_list(value: RangeField) -> list[NumberValue]:
         """
-        Convert RangeField to a list of numeric values using numpy.arange.
+        Convert RangeField to a list of numeric values using Python's built-in range or iteration.
+
+        For integer ranges, uses Python's built-in range() for efficiency.
+        For float ranges, uses iteration to generate values.
 
         Parameters
         ----------
@@ -84,6 +86,19 @@ class Range:
         [2, 3, 4, 5, 6, 7]
         >>> Range.to_list((1, 10, 2))
         [1, 3, 5, 7, 9]
+        >>> Range.to_list((0.0, 1.0, 0.3))
+        [0.0, 0.3, 0.6, 0.9]
         """
         start, stop, step = Range.to_parameters(value)
-        return np.arange(start, stop, step).tolist()
+
+        # Use built-in range for integer values (more efficient)
+        if isinstance(start, int) and isinstance(stop, int) and isinstance(step, int):
+            return list(range(start, stop, step))
+
+        # Use iteration for float values
+        result = []
+        current = start
+        while current < stop:
+            result.append(current)
+            current += step
+        return result

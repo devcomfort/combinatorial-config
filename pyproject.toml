@@ -1,6 +1,6 @@
 [project]
 name = "combinatorial-config"
-version = "0.2.0"
+version = "0.2.1"
 description = "Add your description here"
 authors = [
     { name = "devcomfort", email = "im@devcomfort.me" }
@@ -8,7 +8,6 @@ authors = [
 dependencies = [
     "pytest>=8.4.2",
     "toolz>=1.1.0",
-    "numpy>=2.3.4",
 ]
 readme = "README.md"
 requires-python = ">= 3.8"
