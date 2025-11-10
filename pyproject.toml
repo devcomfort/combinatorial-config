@@ -1,12 +1,11 @@
 [project]
 name = "combinatorial-config"
-version = "0.2.1"
+version = "0.2.2"
 description = "Add your description here"
 authors = [
     { name = "devcomfort", email = "im@devcomfort.me" }
 ]
 dependencies = [
-    "pytest>=8.4.2",
     "toolz>=1.1.0",
 ]
 readme = "README.md"
@@ -19,7 +18,8 @@ build-backend = "hatchling.build"
 [tool.rye]
 managed = true
 dev-dependencies = [
-    "twine>=5.0.0",
+    "twine>=6.2.0",
+    "pytest>=9.0.0",
 ]
 
 [tool.hatch.metadata]
