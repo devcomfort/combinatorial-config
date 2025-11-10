@@ -110,6 +110,8 @@ jobs:
               OLD_VERSION=$(git show HEAD~1:pyproject.toml | grep -E '^version\s*=' | sed -E 's/version\s*=\s*["'\'']([^"'\'']+)["'\'']/\1/')
               NEW_VERSION=$(grep -E '^version\s*=' pyproject.toml | sed -E 's/version\s*=\s*["'\'']([^"'\'']+)["'\'']/\1/')
               
+              echo "Version comparison: OLD=$OLD_VERSION, NEW=$NEW_VERSION"
+              
               if [ "$OLD_VERSION" != "$NEW_VERSION" ]; then
                 # Validate semantic version format (X.Y.Z)
                 if [[ "$NEW_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
@@ -119,7 +121,11 @@ jobs:
                 else
                   echo "Warning: Version $NEW_VERSION does not follow semantic versioning (X.Y.Z format)"
                 fi
+              else
+                echo "Version unchanged: $OLD_VERSION == $NEW_VERSION, skipping release"
               fi
+            else
+              echo "pyproject.toml was not changed in this commit, skipping release"
             fi
           fi
           
