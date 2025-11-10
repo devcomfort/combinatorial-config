@@ -173,6 +173,8 @@ jobs:
 
       - name: Build package
         run: rye run python -m build
+        env:
+          PYTHONPATH: ${{ github.workspace }}/src
 
       - name: Check package
         run: rye run twine check dist/*
